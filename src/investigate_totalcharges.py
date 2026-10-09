@@ -9,4 +9,7 @@ print (converted)
 
 #
 bad_rows = df[converted.isna()]
-print (bad_rows)
+
+print ("Number of bad rows:", len(bad_rows))
+print(bad_rows[["customerID","tenure","MonthlyCharges","TotalCharges"]])
+print(repr(bad_rows["TotalCharges"].iloc[0]))
