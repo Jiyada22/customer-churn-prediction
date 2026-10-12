@@ -8,16 +8,39 @@ OUTPUT_PATH = "data/processed/clean_data.csv"
 df = pd.read_csv(RAW_PATH)
 
 # แปลง TotalCharges เป็นตัวเลข
-df["TotalCharges"] = pd.to_numeric(df["TotalCharges"],errors="coerce")
+df["TotalCharges"] = pd.to_numeric(df["TotalCharges"].astype(str).str.strip(), errors="coerce")
 
-# เติม 0 ใน TotalCharges (ลูกค้าใหม่ที่ยังไม่มีค่า TotalCharges)
-is_missing_new_customer = df["TotalCharges"].isna() & (df["tenure"] == 0)
-print("Rows to fill with 0: ", is_missing_new_customer.sum())
-df.loc[is_missing_new_customer, "TotalCharges"] = 0
+# ตรวจสอบคจำนวนค่าว่าง
+print("Missing TotalCharges : ", df["TotalCharges"].isna().sum())
 
-# เช็คว่าค่าที่หายถูกเติมแล้วหรือยัง
-assert df["TotalCharges"].isna().sum() == 0, "Unexpected missing TotalCharges found!"
+#ตรวจสอบแถวที่มีค่าว่าง
+missing_rows = df[df["TotalCharges"].isna()]
 
-print("TotalChages type is now:",df["TotalCharges"].dtype)
+print("\nRows with missing TotalCharges : ")
+print(missing_rows[["customerID","tenure","MonthlyCharges","TotalCharges"]])
 
+# เติม 0 ให้ลูกค้าใหม่ที่ยังไม่มีค่า TotalCharges
+is_missing_new_customer = (df["TotalCharges"].isna() & (df["tenure"] == 0))
 
+df.loc[is_missing_new_customer,"TotalCharges"] = 0
+
+# ตรวจสอบผลลัพธ์หลังจากเติมค่า
+print("\nRows filled with 0 : ",is_missing_new_customer.sum())
+print("Remaining Missing values : ", df["TotalCharges"].isna().sum())
+print("TotalCharges data type : ", df["TotalCharges"].dtype)
+
+# ตรวจสอบว่าค่าว่างทั้งหมดถูกเติมแล้วหรือไม่
+assert df["TotalCharges"].isna().sum() == 0, "Unexpected missing values in TotalCharges found!"
+print("TotalCharges validation passed.")
+
+#-------------------------------------------------------
+# แปลงค่าของคอลัมน์ Churn เป็นตัวเลข (Yes=1, No=0)
+df["Churn"] = df["Churn"].map({"Yes":1, "No":0})
+
+# ตรวจสอบค่าที่แปลงแล้ว
+print("\nChurn values:")
+print(df["Churn"].value_counts(dropna=False))
+print("\nChurn dtype : ", df["Churn"].dtype)
+
+# ตรวจสอบว่ามีค่าที่แปลงไม่ได้หรือไม่
+assert df["Churn"].notna().all(), "Unexpected Churn values found!"
